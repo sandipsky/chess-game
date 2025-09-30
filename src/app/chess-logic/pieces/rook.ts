@@ -28,6 +28,6 @@ export class Rook extends Piece {
     }
 
     public set hasMoved(_) {
-        this.hasMoved = true;
+        this._hasMoved = true;
     }
 }

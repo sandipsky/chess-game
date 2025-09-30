@@ -7,7 +7,12 @@
             class="square" 
             [class.dark]="isSquareDark(x, y)" 
             [class.light]="!isSquareDark(x, y)"
+            [class.selected-square]="isSquareSelected(x, y)"
+            (click)="selectOrMove(x,y)"
           >
+
+          <div [class.safe-square]="isSquareSafeForSelectedPiece(x,y)"></div>
+
             @if (piece) {
               <img [src]="pieceImagePaths[piece]" [alt]="piece">
             }

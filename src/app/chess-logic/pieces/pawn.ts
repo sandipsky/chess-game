@@ -33,7 +33,7 @@ export class Pawn extends Piece {
     }
 
     public set hasMoved(_) {
-        this.hasMoved = true;
+        this._hasMoved = true;
         this._directions = [
             { x: 1, y: 0 },
             { x: 1, y: 1 },
