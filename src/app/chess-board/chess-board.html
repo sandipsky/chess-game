@@ -8,6 +8,8 @@
             [class.dark]="isSquareDark(x, y)" 
             [class.light]="!isSquareDark(x, y)"
             [class.selected-square]="isSquareSelected(x, y)"
+            [class.last-move]="isSquareLastMove(x,y)"
+            [class.in-check]="isSquareChecked(x,y)"
             (click)="selectOrMove(x,y)"
           >
 

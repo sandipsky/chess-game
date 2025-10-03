@@ -1,3 +1,5 @@
+import { Piece } from "./pieces/piece";
+
 export enum Color {
     White,
     Black
@@ -45,3 +47,23 @@ export type Square = {
 }
 
 export type SafeSquares = Map<string, Coords[]>;
+
+export type LastMove = {
+    prevX: number;
+    prevY: number;
+    currentX: number;
+    currentY: number;
+    piece: Piece;
+}
+
+type KingChecked = {
+    isInCheck: true;
+    x: number;
+    y: number;
+}
+
+type KingNotChecked = {
+    isInCheck: false;
+}
+
+export type CheckState = KingChecked | KingNotChecked;

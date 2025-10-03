@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Color, Coords, FENChar, pieceImagePaths, SafeSquares, Square } from "../chess-logic/models";
+import { CheckState, Color, Coords, FENChar, LastMove, pieceImagePaths, SafeSquares, Square } from "../chess-logic/models";
 import { Bishop } from "../chess-logic/pieces/bishop";
 import { King } from "../chess-logic/pieces/king";
 import { Knight } from "../chess-logic/pieces/knight";
@@ -27,6 +27,10 @@ export class ChessBoardComponent {
   public safeSquares: SafeSquares;
 
   private _pieceSafeSquares: Coords[] = [];
+
+  private _lastMove: LastMove | undefined;
+
+  private _checkState: CheckState = { isInCheck: false };
 
   constructor() {
     this.chessBoard = [
@@ -59,6 +63,14 @@ export class ChessBoardComponent {
     return this.chessBoard.map(row => {
       return row.map(piece => piece instanceof Piece ? piece.FENChar : null);
     })
+  }
+
+  public get lastMove(): LastMove | undefined {
+    return this._lastMove;
+  }
+
+  public get checkState(): CheckState {
+    return this._checkState;
   }
 
   private unmarkPieceandSquares(): void {
@@ -112,8 +124,9 @@ export class ChessBoardComponent {
     this.chessBoard[newX][newY] = piece;
 
 
-
+    this._lastMove = { prevX, prevY, currentX: newX, currentY: newY, piece };
     this._playerColor = this._playerColor == Color.White ? Color.Black : Color.White;
+    this.isInCheck(this._playerColor, true);
     this.safeSquares = this.findSafeSquares();
   }
 
@@ -148,11 +161,23 @@ export class ChessBoardComponent {
     return this._pieceSafeSquares.some(coords => coords.x == x && coords.y == y);
   }
 
+  public isSquareLastMove(x: number, y: number): boolean {
+    if(!this.lastMove) {
+      return false;
+    }
+    const {prevX, prevY, currentX, currentY} = this.lastMove;
+    return x == prevX && y == prevY || x == currentX && y == currentY;
+  }
+
+  public isSquareChecked(x: number, y:number): boolean {
+    return this.checkState.isInCheck && this.checkState.x == x && this.checkState.y == y;
+  }
+
   private areCoordsValid(x: number, y: number): boolean {
     return x >= 0 && y >= 0 && x < 8 && y < 8;
   }
 
-  public isInCheck(playerColor: Color): boolean {
+  public isInCheck(playerColor: Color, checkingCurrentPosition: boolean): boolean {
     for (let x = 0; x < 8; x++) {
       for (let y = 0; y < 8; y++) {
         const piece: Piece | null = this.chessBoard[x][y];
@@ -177,7 +202,10 @@ export class ChessBoardComponent {
             const attackedPiece: Piece | null = this.chessBoard[newX][newY];
 
             if (attackedPiece instanceof King && attackedPiece.color == playerColor) {
-              return true;
+              if (checkingCurrentPosition) {
+                this._checkState = { isInCheck: true, x: newX, y: newY };
+                return true;
+              }
             }
           }
           else {
@@ -185,7 +213,10 @@ export class ChessBoardComponent {
               const attackedPiece: Piece | null = this.chessBoard[newX][newY];
 
               if (attackedPiece instanceof King && attackedPiece.color == playerColor) {
-                return true;
+                if (checkingCurrentPosition) {
+                  this._checkState = { isInCheck: true, x: newX, y: newY };
+                  return true;
+                }
               }
 
               if (attackedPiece !== null) {
@@ -199,11 +230,16 @@ export class ChessBoardComponent {
         }
       }
     }
-
+    if(checkingCurrentPosition) {
+      this._checkState = {isInCheck: false}
+    }
     return false;
   }
 
-  private isPositionSafeAfterMove(piece: Piece, prevX: number, prevY: number, newX: number, newY: number): boolean {
+  private isPositionSafeAfterMove(prevX: number, prevY: number, newX: number, newY: number): boolean {
+    const piece: Piece | null = this.chessBoard[prevX][prevY];
+    if(!piece) return false;
+    
     const newPiece: Piece | null = this.chessBoard[newX][newY];
     //we cant put piece on a square that already contains piece of same square
     if (newPiece && newPiece.color == piece.color) {
@@ -214,7 +250,7 @@ export class ChessBoardComponent {
     this.chessBoard[prevX][prevY] = null;
     this.chessBoard[newX][newY] = piece;
 
-    const isPositionSafe: boolean = !this.isInCheck(piece.color);
+    const isPositionSafe: boolean = !this.isInCheck(piece.color, false);
 
     //restore position
     this.chessBoard[prevX][prevY] = piece;
@@ -277,7 +313,7 @@ export class ChessBoardComponent {
           }
 
           if (piece instanceof Pawn || piece instanceof Knight || piece instanceof King) {
-            if (this.isPositionSafeAfterMove(piece, x, y, newX, newY)) {
+            if (this.isPositionSafeAfterMove(x, y, newX, newY)) {
               pieceSafeSquares.push({ x: newX, y: newY })
             }
           }
@@ -289,7 +325,7 @@ export class ChessBoardComponent {
                 break;
               }
 
-              if (this.isPositionSafeAfterMove(piece, x, y, newX, newY)) {
+              if (this.isPositionSafeAfterMove(x, y, newX, newY)) {
                 pieceSafeSquares.push({ x: newX, y: newY })
               }
 
