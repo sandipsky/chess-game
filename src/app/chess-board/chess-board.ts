@@ -17,7 +17,7 @@ import { Rook } from "../models/pieces/rook";
 
 export class ChessBoardComponent {
   public pieceImagePaths = pieceImagePaths;
-  private chessBoard: (Piece | null)[][];
+  public chessBoard: (Piece | null)[][];
   private _playerColor = Color.White;
   private _selectedSquare: Square = { piece: null };
   public safeSquares: SafeSquares;
@@ -44,14 +44,9 @@ export class ChessBoardComponent {
     this.safeSquares = this.findSafeSquares();
   }
 
+  // Getters
   public get playerColor(): Color {
     return this._playerColor;
-  }
-
-  public get chessBoardView(): (FENChar | null)[][] {
-    return this.chessBoard.map(row => {
-      return row.map(piece => piece instanceof Piece ? piece.FENChar : null);
-    })
   }
 
   public get lastMove(): LastMove | undefined {
@@ -68,17 +63,18 @@ export class ChessBoardComponent {
   }
 
   public selectPiece(x: number, y: number): void {
-    const piece: FENChar | null = this.chessBoardView[x][y];
+    const piece: Piece | null = this.chessBoard[x][y];
     if (!piece) return;
     if (this.isWrongPieceSelected(piece)) return;
-    //unselect piece if already selected
+
+    // Unselect piece if already selected
     if (this._selectedSquare.x == x && this._selectedSquare.y == y && !!this._selectedSquare.piece) {
       this.unmarkPieceandSquares();
       return;
     }
 
     this._selectedSquare = { piece, x, y };
-    this._pieceSafeSquares = this.safeSquares.get(x + "," + y) || [];
+    this._pieceSafeSquares = this.safeSquares.get(`${x},${y}`) || [];
   }
 
   public selectOrMove(x: number, y: number) {
@@ -86,9 +82,10 @@ export class ChessBoardComponent {
     this.placePiece(x, y);
   }
 
-  private isWrongPieceSelected(piece: FENChar): boolean {
-    const isWhitePieceSelected: boolean = piece == piece.toUpperCase();
-    return isWhitePieceSelected && this.playerColor == Color.Black || !isWhitePieceSelected && this.playerColor == Color.White;
+  private isWrongPieceSelected(piece: Piece): boolean {
+    const isWhitePieceSelected = piece.color === Color.White;
+    return (isWhitePieceSelected && this._playerColor === Color.Black) ||
+      (!isWhitePieceSelected && this._playerColor === Color.White);
   }
 
   public movePiece(prevX: number, prevY: number, newX: number, newY: number): void {

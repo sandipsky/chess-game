@@ -1,26 +1,20 @@
 <div class="page-background">
   <div class="chess-board">
-    @for (row of chessBoardView; let x = $index; track $index) {
-      <div class="row">
-        @for (piece of row; let y = $index; track $index) {
-          <div 
-            class="square" 
-            [class.dark]="isSquareDark(x, y)" 
-            [class.light]="!isSquareDark(x, y)"
-            [class.selected-square]="isSquareSelected(x, y)"
-            [class.last-move]="isSquareLastMove(x,y)"
-            [class.in-check]="isSquareChecked(x,y)"
-            (click)="selectOrMove(x,y)"
-          >
+    @for (row of chessBoard; let x = $index; track $index) {
+    <div class="row">
+      @for (piece of row; let y = $index; track $index) {
+      <div class="square" [class.dark]="isSquareDark(x, y)" [class.light]="!isSquareDark(x, y)"
+        [class.selected-square]="isSquareSelected(x, y)" [class.last-move]="isSquareLastMove(x,y)"
+        [class.in-check]="isSquareChecked(x,y)" (click)="selectOrMove(x,y)">
 
-          <div [class.safe-square]="isSquareSafeForSelectedPiece(x,y)"></div>
+        <div [class.safe-square]="isSquareSafeForSelectedPiece(x,y)"></div>
 
-            @if (piece) {
-              <img [src]="pieceImagePaths[piece]" [alt]="piece">
-            }
-          </div>
+        @if (piece) {
+        <img [src]="pieceImagePaths[piece.FENChar]" [alt]="piece">
         }
       </div>
+      }
+    </div>
     }
   </div>
 </div>

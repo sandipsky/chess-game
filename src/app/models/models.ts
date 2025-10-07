@@ -41,7 +41,7 @@ export const pieceImagePaths: Readonly<Record<FENChar, string>> = {
 }
 
 export type Square = {
-    piece: FENChar | null;
+    piece: Piece | null;
     x?: number;
     y?: number;
 }
