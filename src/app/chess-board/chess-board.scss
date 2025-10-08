@@ -35,27 +35,39 @@
 
 .light {
     background-color: #f0d9b5;
+
+    &.last-move {
+        background-color: #cdd26a;
+    }
+
+    .safe-square {
+        background-color: #829769;
+    }
 }
 
 .dark {
     background-color: #b58863;
-}
 
-.selected-square {
-    background-color: #829769;
+    &.last-move {
+        background-color: #aaa23a;
+    }
+
+    .safe-square {
+        background-color: #646f40;
+    }
 }
 
 .safe-square {
     position: absolute;
-    height: 20px;
-    width: 20px;
-    background-color: #829769;
+    height: 26px;
+    width: 26px;
+    background-color: #646f40;
     border-radius: 50%;
     z-index: 100;
 }
 
-.last-move {
-    background-color: #cdd26a;
+.selected-square {
+    background-color: #829769;
 }
 
 .in-check {
