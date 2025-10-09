@@ -56,6 +56,13 @@ export const pieceImagePaths: Readonly<Record<FENChar, string>> = {
     [FENChar.BlackKing]: "assets/pieces1/bk.png",
 }
 
+export const audioPaths: Readonly<Record<string, string>> = {
+    "move": "assets/sounds/move.webm",
+    "capture": "assets/sounds/capture.webm",
+    "check": "assets/sounds/check.webm",
+    "gameover": "assets/sounds/gameover.webm",
+}
+
 export type Square = {
     piece: Piece | null;
     x?: number;

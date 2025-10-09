@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CheckState, Color, Coords, FENChar, LastMove, pieceImagePaths, PossibleMoves, Square } from "../models/models";
+import { audioPaths, CheckState, Color, Coords, FENChar, LastMove, pieceImagePaths, PossibleMoves, Square } from "../models/models";
 import { Bishop } from "../utils/pieces/bishop";
 import { King } from "../utils/pieces/king";
 import { Knight } from "../utils/pieces/knight";
@@ -17,6 +17,7 @@ import { Rook } from "../utils/pieces/rook";
 
 export class ChessBoardComponent {
   public pieceImagePaths = pieceImagePaths;
+  public audioPaths = audioPaths;
   public chessBoard: (Piece | null)[][];
   private _playerColor = Color.White;
   private _selectedSquare: Square = { piece: null };
@@ -42,8 +43,7 @@ export class ChessBoardComponent {
       [new Rook(Color.Black), new Knight(Color.Black), new Bishop(Color.Black), new Queen(Color.Black),
       new King(Color.Black), new Bishop(Color.Black), new Knight(Color.Black), new Rook(Color.Black)
       ],
-    ]
-
+    ];
     this.possibleMoves = this.findPossibleMoves();
   }
 
@@ -62,8 +62,8 @@ export class ChessBoardComponent {
 
   public promotionPieces(): FENChar[] {
     return this.playerColor === Color.White ?
-      [FENChar.WhiteKnight, FENChar.WhiteBishop, FENChar.WhiteRook, FENChar.WhiteQueen, FENChar.WhiteKing] :
-      [FENChar.BlackKnight, FENChar.BlackBishop, FENChar.BlackRook, FENChar.BlackQueen, FENChar.BlackKing];
+      [FENChar.WhiteKnight, FENChar.WhiteBishop, FENChar.WhiteRook, FENChar.WhiteQueen] :
+      [FENChar.BlackKnight, FENChar.BlackBishop, FENChar.BlackRook, FENChar.BlackQueen];
   }
 
   private isWrongPieceSelected(piece: Piece): boolean {
@@ -112,6 +112,8 @@ export class ChessBoardComponent {
 
     if (!piece || piece.color !== this._playerColor) return;
 
+    let moveType = "move";
+
     const piecePossibleMoves = this.possibleMoves.get(fromX + "," + fromY);
 
     if (!piecePossibleMoves || !piecePossibleMoves.find(coords => coords.x == toX && coords.y == toY)) {
@@ -122,10 +124,14 @@ export class ChessBoardComponent {
       piece.hasMoved = true;
     }
 
+    const isPieceTaken: boolean = this.chessBoard[toX][toY] !== null;
+    if (isPieceTaken) moveType = "capture";
+
     //Moving Rook if King 2 step moved i.e Castiling
     if (piece instanceof King && Math.abs(toY - fromY) === 2) {
       const isKingSideCastle = toY > fromY;
       this.castle(isKingSideCastle, fromX);
+      moveType = "castle";
     }
 
     //Caputring Pawn if en passant move
@@ -138,6 +144,7 @@ export class ChessBoardComponent {
       toY === this._lastMove.toY
     ) {
       this.chessBoard[this._lastMove.toX][this._lastMove.toY] = null;
+      moveType = "capture";
     }
 
 
@@ -155,7 +162,13 @@ export class ChessBoardComponent {
       this.updateBoard(fromX, fromY, toX, toY, piece);
     }
 
+    if (this._checkState.isInCheck) {
+      moveType = "check";
+    }
+
     this.isGameOver = this.isGameFinished();
+    if (isPieceTaken) moveType = "gameover";
+    this.playSound(moveType);
   }
 
   updateBoard(fromX: number, fromY: number, toX: number, toY: number, piece: Piece): void {
@@ -430,6 +443,11 @@ export class ChessBoardComponent {
     this.chessBoard[rookPositionX][rookPositionY] = null;
     this.chessBoard[rookPositionX][rookNewPositionY] = rook;
     rook.hasMoved = true;
+  }
+
+  playSound(moveType: string): void {
+    const moveSound = new Audio(this.audioPaths[moveType]);
+    moveSound.play();
   }
 
 }
