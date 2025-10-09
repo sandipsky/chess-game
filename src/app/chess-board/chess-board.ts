@@ -24,21 +24,33 @@ export class ChessBoardComponent {
   private _piecePossibleMoves: Coords[] = [];
   private _lastMove: LastMove | undefined;
   private _checkState: CheckState = { isInCheck: false };
+  public promotionDialog: { visible: boolean, fromX?: number, fromY?: number, toX?: number, toY?: number } = { visible: false };
 
   constructor() {
+    // this.chessBoard = [
+    //   [new Rook(Color.White), new Knight(Color.White), new Bishop(Color.White), new Queen(Color.White),
+    //   new King(Color.White), new Bishop(Color.White), new Knight(Color.White), new Rook(Color.White)
+    //   ],
+    //   Array(8).fill(null).map(() => new Pawn(Color.White)),
+    //   [null, null, null, null, null, null, null, null,],
+    //   [null, null, null, null, null, null, null, null,],
+    //   [null, null, null, null, null, null, null, null,],
+    //   [null, null, null, null, null, null, null, null,],
+    //   Array(8).fill(null).map(() => new Pawn(Color.Black)),
+    //   [new Rook(Color.Black), new Knight(Color.Black), new Bishop(Color.Black), new Queen(Color.Black),
+    //   new King(Color.Black), new Bishop(Color.Black), new Knight(Color.Black), new Rook(Color.Black)
+    //   ],
+    // ]
+
     this.chessBoard = [
-      [new Rook(Color.White), new Knight(Color.White), new Bishop(Color.White), new Queen(Color.White),
-      new King(Color.White), new Bishop(Color.White), new Knight(Color.White), new Rook(Color.White)
-      ],
-      Array(8).fill(null).map(() => new Pawn(Color.White)),
+      [null, null, null, null, null, null, null, null,],
+      [new Pawn(Color.Black), null, null, null, null, null, null, null],
       [null, null, null, null, null, null, null, null,],
       [null, null, null, null, null, null, null, null,],
       [null, null, null, null, null, null, null, null,],
       [null, null, null, null, null, null, null, null,],
-      Array(8).fill(null).map(() => new Pawn(Color.Black)),
-      [new Rook(Color.Black), new Knight(Color.Black), new Bishop(Color.Black), new Queen(Color.Black),
-      new King(Color.Black), new Bishop(Color.Black), new Knight(Color.Black), new Rook(Color.Black)
-      ],
+      [null, null, null, null, null, null, null, new Pawn(Color.White)],
+      [null, null, null, null, null, null, null, null,],
     ]
 
     this.possibleMoves = this.findPossibleMoves();
@@ -55,6 +67,18 @@ export class ChessBoardComponent {
 
   public get checkState(): CheckState {
     return this._checkState;
+  }
+
+  public promotionPieces(): FENChar[] {
+    return this.playerColor === Color.White ?
+      [FENChar.WhiteKnight, FENChar.WhiteBishop, FENChar.WhiteRook, FENChar.WhiteQueen, FENChar.WhiteKing] :
+      [FENChar.BlackKnight, FENChar.BlackBishop, FENChar.BlackRook, FENChar.BlackQueen, FENChar.BlackKing];
+  }
+
+  private isWrongPieceSelected(piece: Piece): boolean {
+    const isWhitePieceSelected = piece.color === Color.White;
+    return (isWhitePieceSelected && this._playerColor === Color.Black) ||
+      (!isWhitePieceSelected && this._playerColor === Color.White);
   }
 
   private unmarkPieceandSquares(): void {
@@ -77,18 +101,20 @@ export class ChessBoardComponent {
     this._piecePossibleMoves = this.possibleMoves.get(`${x},${y}`) || [];
   }
 
+
+
   public selectOrMove(x: number, y: number) {
     this.selectPiece(x, y);
-    this.placePiece(x, y);
+    this.movePiece(x, y);
   }
 
-  private isWrongPieceSelected(piece: Piece): boolean {
-    const isWhitePieceSelected = piece.color === Color.White;
-    return (isWhitePieceSelected && this._playerColor === Color.Black) ||
-      (!isWhitePieceSelected && this._playerColor === Color.White);
-  }
+  public movePiece(toX: number, toY: number): void {
+    if (!this._selectedSquare.piece) return;
+    if (!this.isSquareSafeForSelectedPiece(toX, toY)) return;
 
-  public movePiece(fromX: number, fromY: number, toX: number, toY: number): void {
+    const fromX = Number(this._selectedSquare.x);
+    const fromY = Number(this._selectedSquare.y);
+
     if (!this.areCoordsValid(fromX, fromY) || !this.areCoordsValid(toX, toY)) return;
 
     const piece: Piece | null = this.chessBoard[fromX][fromY];
@@ -108,7 +134,19 @@ export class ChessBoardComponent {
     //Moving Rook if King 2 step moved i.e Castiling
     if (piece instanceof King && Math.abs(toY - fromY) === 2) {
       const isKingSideCastle = toY > fromY;
-      this.castle(isKingSideCastle);
+      this.castle(isKingSideCastle, fromX);
+    }
+
+    //Caputring Pawn if en passant move
+    if (
+      piece instanceof Pawn &&
+      this._lastMove &&
+      this._lastMove.piece instanceof Pawn &&
+      Math.abs(this._lastMove.toX - this._lastMove.fromX) === 2 &&
+      fromX === this._lastMove.toX &&
+      toY === this._lastMove.toY
+    ) {
+      this.chessBoard[this._lastMove.toX][this._lastMove.toY] = null;
     }
 
 
@@ -116,21 +154,50 @@ export class ChessBoardComponent {
     this.chessBoard[fromX][fromY] = null;
     this.chessBoard[toX][toY] = piece;
 
+    const isPawnSelected: boolean = this._selectedSquare.piece.FENChar === FENChar.WhitePawn || this._selectedSquare.piece.FENChar === FENChar.BlackPawn;
+    const isPawnOnlastRank: boolean = toX === 7 || toX === 0;
 
+    if (isPawnSelected && isPawnOnlastRank) {
+      this.promotionDialog = { visible: true, fromX, fromY, toX, toY };
+    }
+    else {
+      this.updateBoard(fromX, fromY, toX, toY, piece);
+    }
+  }
+
+  updateBoard(fromX: number, fromY: number, toX: number, toY: number, piece: Piece): void {
     this._lastMove = { fromX, fromY, toX, toY, piece };
     this._playerColor = this._playerColor == Color.White ? Color.Black : Color.White;
     this.isInCheck(this._playerColor, true);
     this.possibleMoves = this.findPossibleMoves();
+    this.unmarkPieceandSquares();
   }
 
-  public placePiece(newX: number, newY: number): void {
-    if (!this._selectedSquare.piece) return;
-    if (!this.isSquareSafeForSelectedPiece(newX, newY)) return;
+  public promotePawn(fenChar: FENChar): void {
+    if (this.promotionDialog.fromX == null || this.promotionDialog.fromY == null || this.promotionDialog.toX == null || this.promotionDialog.toY == null) return;
+    const { fromX, fromY, toX, toY } = this.promotionDialog;
+    switch (fenChar) {
+      case FENChar.WhiteQueen:
+      case FENChar.BlackQueen:
+        this.chessBoard[toX][toY] = new Queen(this._playerColor); break;
+      case FENChar.WhiteRook:
+      case FENChar.BlackRook:
+        this.chessBoard[toX][toY] = new Rook(this._playerColor); break;
+      case FENChar.WhiteBishop:
+      case FENChar.BlackBishop:
+        this.chessBoard[toX][toY] = new Bishop(this._playerColor); break;
+      case FENChar.WhiteKnight:
+      case FENChar.BlackKnight:
+        this.chessBoard[toX][toY] = new Knight(this._playerColor); break;
+      case FENChar.WhiteKing:
+      case FENChar.BlackKing:
+        this.chessBoard[toX][toY] = new King(this._playerColor); break;
+    }
 
-    const { x: fromX, y: fromY } = this._selectedSquare;
+    const piece = this.chessBoard[toX][toY]
 
-    this.movePiece(Number(fromX), Number(fromY), newX, newY);
-    this.unmarkPieceandSquares();
+    this.promotionDialog = { visible: false };
+    this.updateBoard(fromX, fromY, toX, toY, piece!);
   }
 
   public isSquareDark(x: number, y: number): boolean {
@@ -252,12 +319,18 @@ export class ChessBoardComponent {
           }
         }
 
+        //Check Castling
         if (piece instanceof King) {
           if (this.canCastle(piece, true))
             piecePossibleMoves.push({ x, y: 6 });
 
           if (this.canCastle(piece, false))
             piecePossibleMoves.push({ x, y: 2 });
+        }
+
+        //Check En Passant 
+        if (piece instanceof Pawn && this.canCaptureEnPassant(piece, x, y) && this._lastMove) {
+          piecePossibleMoves.push({ x: x + (piece.color === Color.White ? 1 : -1), y: this._lastMove.fromY });
         }
 
         if (piecePossibleMoves.length) possibleMoves.set(`${x},${y}`, piecePossibleMoves);
@@ -290,8 +363,29 @@ export class ChessBoardComponent {
       this.isPositionSafeAfterMove(kingPositionX, kingPositionY, kingPositionX, secondNextKingPositionY);
   }
 
-  private castle(isKingSideCastle: boolean): void {
-    const rookPositionX: number = this._playerColor === Color.White ? 0 : 7;
+  private canCaptureEnPassant(pawn: Pawn, pawnX: number, pawnY: number): boolean {
+    if (!this._lastMove) return false;
+    const { piece, fromX, fromY, toX, toY } = this._lastMove;
+
+    if (
+      !(piece instanceof Pawn) ||
+      pawn.color !== this._playerColor ||
+      Math.abs(toX - fromX) !== 2 ||
+      pawnX !== toX ||
+      Math.abs(pawnY - toY) !== 1
+    ) return false;
+
+    const pawnNewPositionX: number = pawnX + (pawn.color === Color.White ? 1 : -1);
+    const pawnNewPositionY: number = toY;
+
+    this.chessBoard[toX][toY] = null;
+    const isPositionSafe: boolean = this.isPositionSafeAfterMove(pawnX, pawnY, pawnNewPositionX, pawnNewPositionY);
+    this.chessBoard[toX][toY] = piece;
+
+    return isPositionSafe;
+  }
+
+  private castle(isKingSideCastle: boolean, rookPositionX: number): void {
     const rookPositionY = isKingSideCastle == true ? 7 : 0;
     const rook = this.chessBoard[rookPositionX][rookPositionY] as Rook;
     const rookNewPositionY = isKingSideCastle ? 5 : 3;
@@ -299,4 +393,5 @@ export class ChessBoardComponent {
     this.chessBoard[rookPositionX][rookNewPositionY] = rook;
     rook.hasMoved = true;
   }
+
 }

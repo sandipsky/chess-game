@@ -18,3 +18,15 @@
     }
   </div>
 </div>
+
+@if (promotionDialog.visible) {
+<div class="overlay">
+  <div class="dialog">
+    <div class="promotion-options">
+      @for (piece of promotionPieces(); track $index) {
+      <img [src]="pieceImagePaths[piece]" [alt]="piece" (click)="promotePawn(piece)">
+      }
+    </div>
+  </div>
+</div>
+}
