@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
 import { CheckState, Color, Coords, FENChar, LastMove, pieceImagePaths, PossibleMoves, Square } from "../models/models";
-import { Bishop } from "../models/pieces/bishop";
-import { King } from "../models/pieces/king";
-import { Knight } from "../models/pieces/knight";
-import { Pawn } from "../models/pieces/pawn";
-import { Piece } from "../models/pieces/piece";
-import { Queen } from "../models/pieces/queen";
-import { Rook } from "../models/pieces/rook";
+import { Bishop } from "../utils/pieces/bishop";
+import { King } from "../utils/pieces/king";
+import { Knight } from "../utils/pieces/knight";
+import { Pawn } from "../utils/pieces/pawn";
+import { Piece } from "../utils/piece";
+import { Queen } from "../utils/pieces/queen";
+import { Rook } from "../utils/pieces/rook";
 
 @Component({
   selector: 'app-chess-board',
@@ -25,32 +25,23 @@ export class ChessBoardComponent {
   private _lastMove: LastMove | undefined;
   private _checkState: CheckState = { isInCheck: false };
   public promotionDialog: { visible: boolean, fromX?: number, fromY?: number, toX?: number, toY?: number } = { visible: false };
+  public isGameOver: boolean = false;
+  public gameOver: { type?: string, message?: string } = {};
 
   constructor() {
-    // this.chessBoard = [
-    //   [new Rook(Color.White), new Knight(Color.White), new Bishop(Color.White), new Queen(Color.White),
-    //   new King(Color.White), new Bishop(Color.White), new Knight(Color.White), new Rook(Color.White)
-    //   ],
-    //   Array(8).fill(null).map(() => new Pawn(Color.White)),
-    //   [null, null, null, null, null, null, null, null,],
-    //   [null, null, null, null, null, null, null, null,],
-    //   [null, null, null, null, null, null, null, null,],
-    //   [null, null, null, null, null, null, null, null,],
-    //   Array(8).fill(null).map(() => new Pawn(Color.Black)),
-    //   [new Rook(Color.Black), new Knight(Color.Black), new Bishop(Color.Black), new Queen(Color.Black),
-    //   new King(Color.Black), new Bishop(Color.Black), new Knight(Color.Black), new Rook(Color.Black)
-    //   ],
-    // ]
-
     this.chessBoard = [
+      [new Rook(Color.White), new Knight(Color.White), new Bishop(Color.White), new Queen(Color.White),
+      new King(Color.White), new Bishop(Color.White), new Knight(Color.White), new Rook(Color.White)
+      ],
+      Array(8).fill(null).map(() => new Pawn(Color.White)),
       [null, null, null, null, null, null, null, null,],
-      [new Pawn(Color.Black), null, null, null, null, null, null, null],
       [null, null, null, null, null, null, null, null,],
       [null, null, null, null, null, null, null, null,],
       [null, null, null, null, null, null, null, null,],
-      [null, null, null, null, null, null, null, null,],
-      [null, null, null, null, null, null, null, new Pawn(Color.White)],
-      [null, null, null, null, null, null, null, null,],
+      Array(8).fill(null).map(() => new Pawn(Color.Black)),
+      [new Rook(Color.Black), new Knight(Color.Black), new Bishop(Color.Black), new Queen(Color.Black),
+      new King(Color.Black), new Bishop(Color.Black), new Knight(Color.Black), new Rook(Color.Black)
+      ],
     ]
 
     this.possibleMoves = this.findPossibleMoves();
@@ -163,6 +154,8 @@ export class ChessBoardComponent {
     else {
       this.updateBoard(fromX, fromY, toX, toY, piece);
     }
+
+    this.isGameOver = this.isGameFinished();
   }
 
   updateBoard(fromX: number, fromY: number, toX: number, toY: number, piece: Piece): void {
@@ -198,6 +191,51 @@ export class ChessBoardComponent {
 
     this.promotionDialog = { visible: false };
     this.updateBoard(fromX, fromY, toX, toY, piece!);
+  }
+
+  private isGameFinished(): boolean {
+    if (this.checkInsufficientMaterial()) {
+      this.gameOver.message = "Insufficient material";
+      this.gameOver.type = "Draw";
+      return true;
+    }
+
+    if (!this.possibleMoves.size) {
+      if (this._checkState.isInCheck) {
+        const prevPlayer: string = this._playerColor === Color.White ? "Black" : "White";
+        this.gameOver.message = prevPlayer + " wins";
+        this.gameOver.type = "Checkmate"
+      }
+      else {
+        this.gameOver.message = "Stalemate";
+        this.gameOver.type = "Draw";
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  private checkInsufficientMaterial(): boolean {
+    const whitePieces: { piece: Piece, x: number, y: number }[] = [];
+    const blackPieces: { piece: Piece, x: number, y: number }[] = [];
+
+    for (let x = 0; x < 8; x++) {
+      for (let y = 0; y < 8; y++) {
+        const piece: Piece | null = this.chessBoard[x][y];
+        if (!piece) continue;
+
+        if (piece.color === Color.White) whitePieces.push({ piece, x, y });
+        else blackPieces.push({ piece, x, y });
+      }
+    }
+
+    // King vs King
+    if (whitePieces.length === 1 && blackPieces.length === 1)
+      return true;
+
+    return false;
   }
 
   public isSquareDark(x: number, y: number): boolean {

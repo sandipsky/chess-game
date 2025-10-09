@@ -30,3 +30,13 @@
   </div>
 </div>
 }
+
+@if (isGameOver) {
+<div class="overlay">
+  <div class="dialog">
+    <h2>{{gameOver.type}}</h2>
+    <br>
+    <h3>{{gameOver.message}}</h3>
+  </div>
+</div>
+}

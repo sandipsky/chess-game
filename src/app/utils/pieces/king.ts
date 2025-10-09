@@ -1,7 +1,7 @@
-import { Color, Coords, FENChar } from "../models";
-import { Piece } from "./piece";
+import { Color, Coords, FENChar } from "../../models/models";
+import { Piece } from "../piece";
 
-export class Rook extends Piece {
+export class King extends Piece {
     private _hasMoved: boolean = false;    
 
     protected override _FENChar: FENChar;
@@ -11,15 +11,19 @@ export class Rook extends Piece {
         {x: 0, y: -1},
         {x: 1, y: 0},
         {x: -1, y: 0},
+        {x: 1, y: 1},
+        {x: 1, y: -1},
+        {x: -1, y: 1},
+        {x: -1, y: -1},
     ];
 
     constructor(private pieceColor: Color) {
         super(pieceColor);  
         if(pieceColor == Color.White) {
-            this._FENChar = FENChar.WhiteRook;
+            this._FENChar = FENChar.WhiteKing;
         }
         else {
-            this._FENChar = FENChar.BlackRook;
+            this._FENChar = FENChar.BlackKing;
         }
     }
 

@@ -1,5 +1,5 @@
-import { Color, Coords, FENChar } from "../models";
-import { Piece } from "./piece";
+import { Color, Coords, FENChar } from "../../models/models";
+import { Piece } from "../piece";
 
 export class Pawn extends Piece {
     private _hasMoved: boolean = false;

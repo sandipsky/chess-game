@@ -1,4 +1,5 @@
-import { Piece } from "./pieces/piece";
+import { Piece } from "../utils/piece";
+
 
 export enum Color {
     White,

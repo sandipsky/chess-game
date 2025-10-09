@@ -1,5 +1,5 @@
-import { Color, Coords, FENChar } from "../models";
-import { Piece } from "./piece";
+import { Color, Coords, FENChar } from "../../models/models";
+import { Piece } from "../piece";
 
 export class Knight extends Piece {
     protected override _FENChar: FENChar;
