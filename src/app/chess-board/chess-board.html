@@ -12,11 +12,18 @@
         @if (piece) {
         <img [src]="pieceImagePaths[piece.FENChar]" [alt]="piece">
         }
+
+        <span class="square-label">{{ getSquareDetail(x, y).name }}</span>
       </div>
       }
     </div>
     }
   </div>
+
+  <!-- @for (item of moveList; track $index) {
+    <div style="color: white;">{{item}}</div>
+  } -->
+  <div style="color: white;">{{moveList | json}}</div>
 </div>
 
 @if (promotionDialog.visible) {

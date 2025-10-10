@@ -7,10 +7,11 @@ import { Pawn } from "../utils/pieces/pawn";
 import { Piece } from "../utils/piece";
 import { Queen } from "../utils/pieces/queen";
 import { Rook } from "../utils/pieces/rook";
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-chess-board',
-  imports: [],
+  imports: [CommonModule],
   templateUrl: './chess-board.html',
   styleUrl: './chess-board.scss'
 })
@@ -28,6 +29,8 @@ export class ChessBoardComponent {
   public promotionDialog: { visible: boolean, fromX?: number, fromY?: number, toX?: number, toY?: number } = { visible: false };
   public isGameOver: boolean = false;
   public gameOver: { type?: string, message?: string } = {};
+  public moveList: any[] = [];
+  private fullNumberOfMoves: number = 1;
 
   constructor() {
     this.chessBoard = [
@@ -91,8 +94,6 @@ export class ChessBoardComponent {
     this._selectedSquare = { piece, x, y };
     this._piecePossibleMoves = this.possibleMoves.get(`${x},${y}`) || [];
   }
-
-
 
   public selectOrMove(x: number, y: number) {
     this.selectPiece(x, y);
@@ -166,8 +167,10 @@ export class ChessBoardComponent {
       moveType = "check";
     }
 
+    if (this._playerColor === Color.White) this.fullNumberOfMoves++;
     this.isGameOver = this.isGameFinished();
-    if (isPieceTaken) moveType = "gameover";
+    if (this.isGameOver) moveType = "gameover";
+    this.storeMove(moveType)
     this.playSound(moveType);
   }
 
@@ -204,6 +207,44 @@ export class ChessBoardComponent {
 
     this.promotionDialog = { visible: false };
     this.updateBoard(fromX, fromY, toX, toY, piece!);
+  }
+
+  private storeMove(moveType: string, promotedPiece?: FENChar | null): void {
+    const { piece, toX, toY, fromX, fromY } = this._lastMove!;
+    let pieceName: string = !(piece instanceof Pawn) ? piece.FENChar.toUpperCase() : "";
+    let move: string;
+
+    if (moveType == "castle")
+      move = toY - fromY === 2 ? "O-O" : "O-O-O";
+    else {
+
+      if (moveType == 'capture') {
+        move = pieceName == "" ? this.getSquareDetail(toX, toY).file : pieceName;
+        move += "x" + this.getSquareDetail(toX, toY).name;
+      }
+      else {
+        move = pieceName + this.getSquareDetail(toX, toY).name;
+      }
+
+      if (promotedPiece)
+        move += "=" + promotedPiece.toUpperCase();
+    }
+
+    if (moveType == "check") move += "+";
+    else if (moveType == "gameover") move += "#";
+
+    if (piece.color === Color.White) {
+      this.moveList.push([move]); 
+    } else if (piece.color === Color.Black && this.moveList.length > 0) {
+      this.moveList[this.moveList.length - 1].push(move); 
+    }
+  }
+
+  public getSquareDetail(x: number, y: number): { file: string, rank: number, name: string } {
+    const file = String.fromCharCode(97 + y);
+    const rank = x + 1;
+    const name = file + rank;
+    return { file, rank, name };
   }
 
   private isGameFinished(): boolean {
