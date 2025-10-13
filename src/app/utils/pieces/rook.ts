@@ -13,6 +13,8 @@ export class Rook extends Piece {
         {x: -1, y: 0},
     ];
 
+    protected override _points = 5;
+
     constructor(private pieceColor: Color) {
         super(pieceColor);  
         if(pieceColor == Color.White) {

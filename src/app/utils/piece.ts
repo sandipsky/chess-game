@@ -5,6 +5,8 @@ export abstract class Piece {
 
     protected abstract _directions: Coords[];
 
+    protected abstract _points: number;
+
     constructor(private _color: Color) {}
 
     public get FENChar(): FENChar {
@@ -17,6 +19,10 @@ export abstract class Piece {
 
     public get color(): Color {
         return this._color;
+    }
+
+    public get points(): number {
+        return this._points;
     }
 }
 

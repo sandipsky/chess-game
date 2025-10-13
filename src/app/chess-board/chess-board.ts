@@ -31,6 +31,7 @@ export class ChessBoardComponent {
   public gameOver: { type?: string, message?: string } = {};
   public moveList: any[] = [];
   private fullNumberOfMoves: number = 1;
+  private _capturedPieces: Piece[] = [];
 
   constructor() {
     this.chessBoard = [
@@ -61,6 +62,11 @@ export class ChessBoardComponent {
 
   public get checkState(): CheckState {
     return this._checkState;
+  }
+
+  public getCapturedPieces(color: Color): Piece[] {
+    // console.log(this._capturedPieces.filter(piece => piece.color == color));
+    return this._capturedPieces.filter(piece => piece.color == color);
   }
 
   public promotionPieces(): FENChar[] {
@@ -127,6 +133,14 @@ export class ChessBoardComponent {
 
     const isPieceTaken: boolean = this.chessBoard[toX][toY] !== null;
     if (isPieceTaken) moveType = "capture";
+    const takenPiece: Piece | null = this.chessBoard[toX][toY];
+
+    if (takenPiece) {
+      this._capturedPieces.push(takenPiece);
+      console.log(this._capturedPieces);
+      this.getCapturedPieces(Color.White);
+      this.getCapturedPieces(Color.Black);
+    }
 
     //Moving Rook if King 2 step moved i.e Castiling
     if (piece instanceof King && Math.abs(toY - fromY) === 2) {
@@ -234,9 +248,9 @@ export class ChessBoardComponent {
     else if (moveType == "gameover") move += "#";
 
     if (piece.color === Color.White) {
-      this.moveList.push([move]); 
+      this.moveList.push([move]);
     } else if (piece.color === Color.Black && this.moveList.length > 0) {
-      this.moveList[this.moveList.length - 1].push(move); 
+      this.moveList[this.moveList.length - 1].push(move);
     }
   }
 

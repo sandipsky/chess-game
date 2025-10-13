@@ -144,3 +144,51 @@
         transform: scale(1);
     }
 }
+
+
+.player-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #2b2b2b;
+  color: white;
+  padding: 8px 16px;
+  width: 90vmin;
+  margin: 0 auto;
+  border-radius: 8px;
+}
+
+.player-header.top {
+  margin-bottom: 8px;
+}
+
+.player-header.bottom {
+  margin-top: 8px;
+}
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.material-advantage {
+  color: #cccccc;
+  font-size: 14px;
+}
+
+.captured-pieces {
+  display: flex;
+  gap: 4px;
+}
+
+.captured-pieces img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}

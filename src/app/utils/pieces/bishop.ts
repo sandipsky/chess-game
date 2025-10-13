@@ -11,6 +11,8 @@ export class Bishop extends Piece {
         {x: -1, y: -1},
     ];
 
+    protected override _points = 3;
+
     constructor(private pieceColor: Color) {
         super(pieceColor);  
         if(pieceColor == Color.White) {

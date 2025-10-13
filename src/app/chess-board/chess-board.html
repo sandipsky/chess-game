@@ -1,4 +1,18 @@
 <div class="page-background">
+
+  <!-- Top Player (Black) -->
+  <div class="player-header top">
+    <div class="player-info">
+      <div class="player-name">Black</div>
+      <!-- <div class="material-advantage" *ngIf="materialDifference > 0">+{{ materialDifference }}</div> -->
+    </div>
+    <div class="captured-pieces">
+      @for (piece of getCapturedPieces(0); track $index) {
+      <img [src]="pieceImagePaths[piece.FENChar]" [alt]="piece">
+      }
+    </div>
+  </div>
+
   <div class="chess-board">
     @for (row of chessBoard; let x = $index; track $index) {
     <div class="row">
@@ -20,9 +34,19 @@
     }
   </div>
 
-  <!-- @for (item of moveList; track $index) {
-    <div style="color: white;">{{item}}</div>
-  } -->
+  <!-- Bottom Player (White) -->
+  <div class="player-header bottom">
+    <div class="player-info">
+      <div class="player-name">White</div>
+      <!-- <div class="material-advantage" *ngIf="materialDifference < 0">+{{ Math.abs(materialDifference) }}</div> -->
+    </div>
+    <div class="captured-pieces">
+      @for (piece of getCapturedPieces(1); track $index) {
+      <img [src]="pieceImagePaths[piece.FENChar]" [alt]="piece">
+      }
+    </div>
+  </div>
+
   <div style="color: white;">{{moveList | json}}</div>
 </div>
 

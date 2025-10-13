@@ -6,6 +6,8 @@ export class King extends Piece {
 
     protected override _FENChar: FENChar;
 
+    protected override _points = 0;
+
     protected override _directions: Coords[] = [
         {x: 0, y: 1},
         {x: 0, y: -1},
