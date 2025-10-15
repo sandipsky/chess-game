@@ -1,9 +1,13 @@
+.game-section {
+    display: flex;
+}
+
 .chess-board {
     display: flex;
     justify-content: center;
     flex-direction: column-reverse;
-    width: 90vmin;
-    height: 90vmin;
+    width: 80vmin;
+    height: 80vmin;
 }
 
 .rotated {
@@ -148,14 +152,13 @@
 
 .player-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #2b2b2b;
+  flex-direction: column;
   color: white;
   padding: 8px 16px;
   width: 90vmin;
   margin: 0 auto;
   border-radius: 8px;
+  height: 60px;
 }
 
 .player-header.top {
@@ -184,11 +187,11 @@
 
 .captured-pieces {
   display: flex;
+  align-items: center;
   gap: 4px;
 }
 
 .captured-pieces img {
   width: 24px;
   height: 24px;
-  object-fit: contain;
 }

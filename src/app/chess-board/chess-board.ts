@@ -32,6 +32,7 @@ export class ChessBoardComponent {
   public moveList: any[] = [];
   private fullNumberOfMoves: number = 1;
   private _capturedPieces: Piece[] = [];
+  public materialDifference: number = 0;
 
   constructor() {
     this.chessBoard = [
@@ -65,7 +66,6 @@ export class ChessBoardComponent {
   }
 
   public getCapturedPieces(color: Color): Piece[] {
-    // console.log(this._capturedPieces.filter(piece => piece.color == color));
     return this._capturedPieces.filter(piece => piece.color == color);
   }
 
@@ -137,9 +137,7 @@ export class ChessBoardComponent {
 
     if (takenPiece) {
       this._capturedPieces.push(takenPiece);
-      console.log(this._capturedPieces);
-      this.getCapturedPieces(Color.White);
-      this.getCapturedPieces(Color.Black);
+      this.materialDifference += takenPiece.color === Color.White ? -takenPiece.points : takenPiece.points;
     }
 
     //Moving Rook if King 2 step moved i.e Castiling

@@ -1,53 +1,69 @@
 <div class="page-background">
 
-  <!-- Top Player (Black) -->
-  <div class="player-header top">
-    <div class="player-info">
-      <div class="player-name">Black</div>
-      <!-- <div class="material-advantage" *ngIf="materialDifference > 0">+{{ materialDifference }}</div> -->
-    </div>
-    <div class="captured-pieces">
-      @for (piece of getCapturedPieces(0); track $index) {
-      <img [src]="pieceImagePaths[piece.FENChar]" [alt]="piece">
-      }
-    </div>
-  </div>
-
-  <div class="chess-board">
-    @for (row of chessBoard; let x = $index; track $index) {
-    <div class="row">
-      @for (piece of row; let y = $index; track $index) {
-      <div class="square" [class.dark]="isSquareDark(x, y)" [class.light]="!isSquareDark(x, y)"
-        [class.selected-square]="isSquareSelected(x, y)" [class.last-move]="isSquareLastMove(x,y)"
-        [class.in-check]="isSquareChecked(x,y)" (click)="selectOrMove(x,y)">
-
-        <div [class.safe-square]="isSquareSafeForSelectedPiece(x,y)"></div>
-
-        @if (piece) {
-        <img [src]="pieceImagePaths[piece.FENChar]" [alt]="piece">
-        }
-
-        <span class="square-label">{{ getSquareDetail(x, y).name }}</span>
+  <div class="game-section">
+    
+    <div class="chess-section">
+      <div class="player-header top">
+        <div class="player-info">
+          <div class="player-name">Black</div>
+        </div>
+        <div class="captured-pieces">
+          @for (piece of getCapturedPieces(0); track $index) {
+          <img [src]="pieceImagePaths[piece.FENChar]" [alt]="piece">
+          }
+          <span *ngIf="materialDifference < 0">
+            +{{ -(materialDifference) }}
+          </span>
+        </div>
       </div>
+
+      <div class="chess-board">
+        @for (row of chessBoard; let x = $index; track $index) {
+        <div class="row">
+          @for (piece of row; let y = $index; track $index) {
+          <div class="square" [class.dark]="isSquareDark(x, y)" [class.light]="!isSquareDark(x, y)"
+            [class.selected-square]="isSquareSelected(x, y)" [class.last-move]="isSquareLastMove(x,y)"
+            [class.in-check]="isSquareChecked(x,y)" (click)="selectOrMove(x,y)">
+
+            <div [class.safe-square]="isSquareSafeForSelectedPiece(x,y)"></div>
+
+            @if (piece) {
+            <img [src]="pieceImagePaths[piece.FENChar]" [alt]="piece">
+            }
+
+            <span class="square-label">{{ getSquareDetail(x, y).name }}</span>
+          </div>
+          }
+        </div>
+        }
+      </div>
+
+      <!-- Bottom Player (White) -->
+      <div class="player-header bottom">
+        <div class="player-info">
+          <div class="player-name">White</div>
+        </div>
+        <div class="captured-pieces">
+          @for (piece of getCapturedPieces(1); track $index) {
+          <img [src]="pieceImagePaths[piece.FENChar]" [alt]="piece">
+          }
+          <span *ngIf="materialDifference > 0">
+            +{{ materialDifference }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    @for (moves of moveList; track $index) {
+    <div>{{$index}}. 
+      @for (move of moves; track $index) {
+        <span>{{move}}</span>
       }
     </div>
     }
-  </div>
+    <!-- <div style="color: white;">{{moveList | json}}</div> -->
 
-  <!-- Bottom Player (White) -->
-  <div class="player-header bottom">
-    <div class="player-info">
-      <div class="player-name">White</div>
-      <!-- <div class="material-advantage" *ngIf="materialDifference < 0">+{{ Math.abs(materialDifference) }}</div> -->
-    </div>
-    <div class="captured-pieces">
-      @for (piece of getCapturedPieces(1); track $index) {
-      <img [src]="pieceImagePaths[piece.FENChar]" [alt]="piece">
-      }
-    </div>
   </div>
-
-  <div style="color: white;">{{moveList | json}}</div>
 </div>
 
 @if (promotionDialog.visible) {
