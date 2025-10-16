@@ -1,7 +1,10 @@
 import { Color, LastMove } from "../models/models";
 import { Piece } from "./piece";
+import { Bishop } from "./pieces/bishop";
 import { King } from "./pieces/king";
+import { Knight } from "./pieces/knight";
 import { Pawn } from "./pieces/pawn";
+import { Queen } from "./pieces/queen";
 import { Rook } from "./pieces/rook";
 
 
@@ -43,8 +46,8 @@ export class FENConverter {
         const player: string = playerColor === Color.White ? "w" : "b";
         FEN += " " + player;
         FEN += " " + this.castlingAvailability(board);
-        FEN += " " + this.enPassantPosibility(lastMove, playerColor);
-        FEN += " " + fiftyMoveRuleCounter * 2;
+        FEN += " " + this.enPassantPosibility(lastMove, playerColor, board);
+        FEN += " " + fiftyMoveRuleCounter;
         FEN += " " + numberOfFullMoves;
         return FEN;
     }
@@ -77,14 +80,80 @@ export class FENConverter {
         return castlingAvailability !== "" ? castlingAvailability : "-";
     }
 
-    private enPassantPosibility(lastMove: LastMove | undefined, color: Color): string {
+    private enPassantPosibility(
+        lastMove: LastMove | undefined,
+        color: Color,
+        board: (Piece | null)[][]
+    ): string {
         if (!lastMove) return "-";
-        const { piece, toX: newX, fromX, fromY } = lastMove;
 
-        if (piece instanceof Pawn && Math.abs(newX - fromX) === 2) {
-            const row: number = color === Color.White ? 6 : 3;
-            // return columns[fromY] + String(row);
+        const { piece, toX: newX, toY, fromX, fromY } = lastMove;
+
+        // Only pawns that moved two squares can trigger en passant
+        if (!(piece instanceof Pawn) || Math.abs(newX - fromX) !== 2) return "-";
+
+        const directions = [-1, 1]; // check both left and right
+        const columns = ["a", "b", "c", "d", "e", "f", "g", "h"];
+
+        for (const dir of directions) {
+            const adjY = toY + dir;
+            if (adjY < 0 || adjY > 7) continue; // skip invalid columns
+
+            const adjacentPiece = board[newX][adjY];
+            if (adjacentPiece instanceof Pawn && adjacentPiece.color !== piece.color) {
+                const row = color === Color.White ? 6 : 3; // target en passant capture rank
+                return columns[toY] + String(row);
+            }
         }
+
         return "-";
     }
+
+
+    public convertFENToBoard(fen: string): (Piece | null)[][] {
+        const board: (Piece | null)[][] = Array.from({ length: 8 }, () => Array(8).fill(null));
+        const [piecePlacement] = fen.split(" ");
+
+        const rows = piecePlacement.split("/");
+
+        for (let i = 0; i < 8; i++) {
+            const row = rows[7 - i]; // FEN starts from rank 8
+            let colIndex = 0;
+
+            for (const char of row) {
+                if (colIndex >= 8) break;
+
+                const emptySquares = parseInt(char);
+                if (!isNaN(emptySquares)) {
+                    colIndex += emptySquares;
+                    continue;
+                }
+
+                const piece = this.charToPiece(char);
+                if (piece) {
+                    board[i][colIndex] = piece;
+                    colIndex++;
+                }
+            }
+        }
+
+        return board;
+    }
+
+    private charToPiece(char: string): Piece | null {
+        const isWhite = char === char.toUpperCase();
+        const color = isWhite ? Color.White : Color.Black;
+        const lowerChar = char.toLowerCase();
+
+        switch (lowerChar) {
+            case "p": return new Pawn(color);
+            case "r": return new Rook(color);
+            case "n": return new Knight(color);
+            case "b": return new Bishop(color);
+            case "q": return new Queen(color);
+            case "k": return new King(color);
+            default: return null;
+        }
+    }
+
 }

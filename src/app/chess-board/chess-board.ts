@@ -8,6 +8,8 @@ import { Piece } from "../utils/piece";
 import { Queen } from "../utils/pieces/queen";
 import { Rook } from "../utils/pieces/rook";
 import { CommonModule } from '@angular/common';
+import { FENConverter } from '../utils/FENConverter';
+
 
 @Component({
   selector: 'app-chess-board',
@@ -30,9 +32,13 @@ export class ChessBoardComponent {
   public isGameOver: boolean = false;
   public gameOver: { type?: string, message?: string } = {};
   public moveList: any[] = [];
-  private fullNumberOfMoves: number = 1;
   private _capturedPieces: Piece[] = [];
   public materialDifference: number = 0;
+  private FENConverter = new FENConverter();
+  private fullNumberOfMoves: number = 1;
+  private fiftyMoveRuleCounter: number = 0;
+  public boardHistory: { fen: string, lastMove: LastMove | undefined }[] = [{ fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", lastMove: undefined }];
+  public currentMoveIndex: number = -1;
 
   constructor() {
     this.chessBoard = [
@@ -102,6 +108,7 @@ export class ChessBoardComponent {
   }
 
   public selectOrMove(x: number, y: number) {
+    if (this.currentMoveIndex !== -1) return;
     this.selectPiece(x, y);
     this.movePiece(x, y);
   }
@@ -138,6 +145,14 @@ export class ChessBoardComponent {
     if (takenPiece) {
       this._capturedPieces.push(takenPiece);
       this.materialDifference += takenPiece.color === Color.White ? -takenPiece.points : takenPiece.points;
+    }
+
+    //fifymovecounter
+    if (piece instanceof Pawn || isPieceTaken) {
+      this.fiftyMoveRuleCounter = 0;
+    }
+    else {
+      this.fiftyMoveRuleCounter += 1;
     }
 
     //Moving Rook if King 2 step moved i.e Castiling
@@ -179,19 +194,22 @@ export class ChessBoardComponent {
       moveType = "check";
     }
 
-    if (this._playerColor === Color.White) this.fullNumberOfMoves++;
+    const fen = this.FENConverter.convertBoardToFEN(this.chessBoard, this._playerColor, this._lastMove, this.fiftyMoveRuleCounter, this.fullNumberOfMoves);
+    this.boardHistory.push({ fen: fen, lastMove: this.lastMove })
+    this.storeMove(moveType)
     this.isGameOver = this.isGameFinished();
     if (this.isGameOver) moveType = "gameover";
-    this.storeMove(moveType)
     this.playSound(moveType);
   }
 
   updateBoard(fromX: number, fromY: number, toX: number, toY: number, piece: Piece): void {
     this._lastMove = { fromX, fromY, toX, toY, piece };
+    if (this._playerColor === Color.Black) this.fullNumberOfMoves++;
     this._playerColor = this._playerColor == Color.White ? Color.Black : Color.White;
     this.isInCheck(this._playerColor, true);
     this.possibleMoves = this.findPossibleMoves();
     this.unmarkPieceandSquares();
+    this.currentMoveIndex = -1;
   }
 
   public promotePawn(fenChar: FENChar): void {
@@ -252,6 +270,34 @@ export class ChessBoardComponent {
     }
   }
 
+  public goToPreviousMove(): void {
+    if (this.currentMoveIndex === -1) this.currentMoveIndex = this.boardHistory.length - 2;
+    else this.currentMoveIndex--;
+
+    if (this.currentMoveIndex < 0) this.currentMoveIndex = 0;
+    const fen = this.boardHistory[this.currentMoveIndex];
+    this.chessBoard = this.FENConverter.convertFENToBoard(fen.fen);
+    this._lastMove = fen.lastMove;
+    this.unmarkPieceandSquares();
+  }
+
+  public goToNextMove(): void {
+    if (this.currentMoveIndex === -1) return;
+    this.currentMoveIndex++;
+
+    if (this.currentMoveIndex >= this.boardHistory.length - 1) {
+      this.currentMoveIndex = -1;
+      const fen = this.boardHistory[this.boardHistory.length - 1];
+      this.chessBoard = this.FENConverter.convertFENToBoard(fen.fen);
+      this._lastMove = fen.lastMove;
+    } else {
+      const fen = this.boardHistory[this.currentMoveIndex];
+      this.chessBoard = this.FENConverter.convertFENToBoard(fen.fen);
+      this._lastMove = fen.lastMove;
+    }
+    this.unmarkPieceandSquares();
+  }
+
   public getSquareDetail(x: number, y: number): { file: string, rank: number, name: string } {
     const file = String.fromCharCode(97 + y);
     const rank = x + 1;
@@ -262,6 +308,18 @@ export class ChessBoardComponent {
   private isGameFinished(): boolean {
     if (this.checkInsufficientMaterial()) {
       this.gameOver.message = "Insufficient material";
+      this.gameOver.type = "Draw";
+      return true;
+    }
+
+    if (this.fiftyMoveRuleCounter >= 50) {
+      this.gameOver.message = "Fifty Move Rule Reached";
+      this.gameOver.type = "Draw";
+      return true;
+    }
+
+    if (this.isThreefoldRepetition()) {
+      this.gameOver.message = "Three fold repetition";
       this.gameOver.type = "Draw";
       return true;
     }
@@ -301,7 +359,33 @@ export class ChessBoardComponent {
     if (whitePieces.length === 1 && blackPieces.length === 1)
       return true;
 
+    // King and Minor Piece vs King
+    if (whitePieces.length === 1 && blackPieces.length === 2)
+      return blackPieces.some(piece => piece.piece instanceof Knight || piece.piece instanceof Bishop);
+
+    else if (whitePieces.length === 2 && blackPieces.length === 1)
+      return whitePieces.some(piece => piece.piece instanceof Knight || piece.piece instanceof Bishop);
+
     return false;
+  }
+
+  private isThreefoldRepetition(): boolean {
+    if (!this.boardHistory.length) return false;
+    const lastReduced = this.reducedFEN(this.boardHistory[this.boardHistory.length - 1].fen);
+    return this.countReducedFENOcurrences(lastReduced) >= 3;
+  }
+
+  private reducedFEN(fen: string): string {
+    const parts = fen.split(' ');
+    return parts.slice(0, 4).join(' ');
+  }
+
+  private countReducedFENOcurrences(reducedFen: string): number {
+    let count = 0;
+    for (const entry of this.boardHistory) {
+      if (this.reducedFEN(entry.fen) === reducedFen) count++;
+    }
+    return count;
   }
 
   public isSquareDark(x: number, y: number): boolean {
