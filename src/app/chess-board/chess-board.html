@@ -17,7 +17,7 @@
         </div>
       </div>
 
-      <div class="chess-board">
+      <div class="chess-board" [class.rotated]="flipMode == true">
         @for (row of chessBoard; let x = $index; track $index) {
         <div class="row">
           @for (piece of row; let y = $index; track $index) {
@@ -28,10 +28,10 @@
             <div [class.safe-square]="isSquareSafeForSelectedPiece(x,y)"></div>
 
             @if (piece) {
-            <img [src]="pieceImagePaths[piece.FENChar]" [alt]="piece">
+            <img [class.rotated]="flipMode == true" [src]="pieceImagePaths[piece.FENChar]" [alt]="piece">
             }
 
-            <span class="square-label">{{ getSquareDetail(x, y).name }}</span>
+            <!-- <span class="square-label">{{ getSquareDetail(x, y).name }}</span> -->
           </div>
           }
         </div>
@@ -61,7 +61,7 @@
       }
     </div>
     }
-    <!-- <div style="color: white;">{{moveList | json}}</div> -->
+
     <button (click)="goToPreviousMove()">Prev</button>
     <button (click)="goToNextMove()">Next</button>
   </div>

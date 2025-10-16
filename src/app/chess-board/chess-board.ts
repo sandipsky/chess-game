@@ -39,6 +39,7 @@ export class ChessBoardComponent {
   private fiftyMoveRuleCounter: number = 0;
   public boardHistory: { fen: string, lastMove: LastMove | undefined }[] = [{ fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", lastMove: undefined }];
   public currentMoveIndex: number = -1;
+  public flipMode: boolean = false;
 
   constructor() {
     this.chessBoard = [
@@ -200,6 +201,12 @@ export class ChessBoardComponent {
     this.isGameOver = this.isGameFinished();
     if (this.isGameOver) moveType = "gameover";
     this.playSound(moveType);
+    if(this.playerColor == Color.Black) {
+      this.flipMode = true;
+    }
+    else {
+      this.flipMode = false;
+    }
   }
 
   updateBoard(fromX: number, fromY: number, toX: number, toY: number, piece: Piece): void {
