@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { audioPaths, CheckState, Color, Coords, FENChar, LastMove, pieceImagePaths, PossibleMoves, Square } from "../models/models";
 import { Bishop } from "../utils/pieces/bishop";
 import { King } from "../utils/pieces/king";
@@ -40,6 +40,8 @@ export class ChessBoardComponent {
   public boardHistory: { fen: string, lastMove: LastMove | undefined }[] = [{ fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", lastMove: undefined }];
   public currentMoveIndex: number = -1;
   public flipMode: boolean = false;
+
+  @Input() multiplayerMode: boolean = false;
 
   constructor() {
     this.chessBoard = [
